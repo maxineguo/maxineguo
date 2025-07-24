@@ -1,4 +1,4 @@
-# ✨ Welcome to my GitHub profile! This README is dynamically updated with fascinating insights from the cosmos. ✨
+# ✨ Welcome to my GitHub profile! Here are some fascinating insights from the cosmos. ✨
 
 
 ### Astronomy Picture of the Day (APOD)
