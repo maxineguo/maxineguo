@@ -209,7 +209,7 @@ def generate_readme_content():
 
     # Assemble the full README content using an f-string for easy insertion
     readme_template = f"""
-# ✨ Welcome to my GitHub profile! This README is dynamically updated with fascinating insights from the cosmos. ✨
+# ✨ Welcome to my GitHub profile! Here are some fascinating insights from the cosmos. ✨
 
 {apod_section_md}
 
