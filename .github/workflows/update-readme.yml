@@ -1,0 +1,102 @@
+# 1. Workflow Name: This is the name that will appear in the "Actions" tab of your GitHub repository.
+name: Update Astronomical Odyssey README
+
+# 2. Trigger Events: Defines WHEN this workflow will run.
+on:
+  # 2a. `workflow_dispatch`: Allows manual triggering.
+  #     - **Purpose:** Great for initial testing or if you need to force an update immediately.
+  #     - **How it works:** After you push this file, go to your repository's "Actions" tab,
+  #       select "Update Astronomical Odyssey README" on the left, and you'll see a
+  #       "Run workflow" button.
+  workflow_dispatch: 
+
+  # 2b. `schedule`: Configures automatic recurring runs based on a cron expression.
+  #     - **Purpose:** This is what makes your README update hourly.
+  #     - **Cron Syntax `0 * * * *`:**
+  #         - The `cron:` key specifies a cron job.
+  #         - The cron string `0 * * * *` means:
+  #           - `0`: At minute 0 (the top of the hour).
+  #           - `*`: Of every hour.
+  #           - `*`: Of every day of the month.
+  #           - `*`: Of every month.
+  #           - `*`: Of every day of the week.
+  #         - **Result:** The workflow will run at 0:00, 1:00, 2:00 UTC, and so on, every day.
+  schedule:
+    - cron: '0 * * * *' 
+
+# 3. Jobs: A workflow is made up of one or more jobs that run in parallel by default.
+#    In our case, we have one job named `update-readme-job`.
+jobs:
+  update-readme-job:
+    # 3a. `runs-on`: Specifies the virtual environment where the job will run.
+    #     - `ubuntu-latest`: A standard Linux environment (Ubuntu operating system)
+    #       with many common tools pre-installed (like Git, Python, Node.js).
+    runs-on: ubuntu-latest
+
+    # 3b. Steps: A job consists of a sequence of steps. Each step can run a shell command
+    #     or use a pre-built GitHub Action (defined by `uses:`).
+    steps:
+      # Step 1: Checkout the repository code.
+      - name: Checkout repository
+        # `name`: A human-readable title for the step, shown in the Actions logs.
+        # `uses`: Specifies a pre-built action from the GitHub Marketplace or a public repository.
+        # `actions/checkout@v4`: This particular action downloads your repository's code
+        #                       onto the runner so subsequent steps can access your files.
+        uses: actions/checkout@v4 
+
+      # Step 2: Set up a Python environment.
+      - name: Set up Python
+        # `actions/setup-python@v5`: This action installs a specific Python version on the runner.
+        uses: actions/setup-python@v5
+        with: # `with` is used to pass parameters to the action.
+          python-version: '3.x' # '3.x' means the latest stable Python 3 version (e.g., 3.10, 3.11).
+
+      # Step 3: Install Python dependencies (the 'requests' library).
+      - name: Install Python dependencies
+        # `run`: Executes a shell command on the runner.
+        # `|` allows for a multi-line shell command.
+        run: |
+          # Ensure pip (Python package installer) is up-to-date.
+          python -m pip install --upgrade pip
+          # Install the 'requests' library, which your Python script uses for API calls.
+          pip install requests
+
+      # Step 4: Execute your Python script.
+      - name: Run Python script to update README
+        # `env`: Defines environment variables specific to this step.
+        #     - **Purpose:** This is how your Python script gets access to the NASA_API_KEY
+        #       without it being hardcoded in your public repository.
+        #     - `${{ secrets.NASA_API_KEY }}`: This is a special GitHub Actions syntax
+        #       that securely retrieves the value of the secret named `NASA_API_KEY`
+        #       which you will define in your repository settings (Phase 4).
+        env:
+          NASA_API_KEY: ${{ secrets.NASA_API_KEY }} 
+        # Execute your Python script. The `python` command will find your script
+        # because the `actions/checkout` step made your repository's files available.
+        run: python scripts/update_space_readme.py
+
+      # Step 5: Commit and push the updated README.md back to your repository.
+      - name: Commit and push changes
+        # These are standard Git commands that will run on the GitHub Actions runner.
+        run: |
+          # Configure the Git user details for the commit.
+          # 'github-actions[bot]' is a special user that represents GitHub's automation.
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+
+          # Stage the README.md file for commit. This tells Git that changes to README.md
+          # should be included in the next commit.
+          git add README.md
+
+          # Commit the changes.
+          # `git commit -m "Your message"` creates a new commit.
+          # `|| echo "No changes to commit"`: This is a shell trick. If the `git commit`
+          # command fails (e.g., because there were NO actual changes to `README.md` since
+          # the last run, which happens if the APOD hasn't changed), the `||` (OR operator)
+          # will execute the `echo` command instead, making the step succeed gracefully
+          # rather than failing the entire workflow.
+          git commit -m "🚀 Update Astronomical Odyssey README" || echo "No changes to commit"
+
+          # Push the committed changes to your 'main' branch on GitHub.
+          # If your default branch is 'master', you MUST change 'main' to 'master' here.
+          git push
